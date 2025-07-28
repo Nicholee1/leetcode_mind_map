@@ -1,0 +1,12 @@
+### Obsidian ###
+# 创建.gitignore 文件内容
+# config dir
+.obsidian/
+# System files
+.DS_Store # macOS
+Thumbs.db # Windows
+# Backup files
+*.bak
+*.tmp
+lib/
+Untitled/
