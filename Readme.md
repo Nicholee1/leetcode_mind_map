@@ -1,3 +1,5 @@
+# Hot 100 解题思路
+
 ![mind_map](lc_hot100_mind_map_v1.png)
 - [回溯](#%E5%9B%9E%E6%BA%AF)
 - [二分搜索](#%E4%BA%8C%E5%88%86%E6%90%9C%E7%B4%A2)
@@ -18,6 +20,19 @@
 	- [插入排序](#%E6%8F%92%E5%85%A5%E6%8E%92%E5%BA%8F)
 	- [归并排序](#%E5%BD%92%E5%B9%B6%E6%8E%92%E5%BA%8F)
 	- [快速排序](#%E5%BF%AB%E9%80%9F%E6%8E%92%E5%BA%8F)
+- [动态规划](#%E5%8A%A8%E6%80%81%E8%A7%84%E5%88%92)
+	- [一维动态规划：](#%E4%B8%80%E7%BB%B4%E5%8A%A8%E6%80%81%E8%A7%84%E5%88%92%EF%BC%9A)
+	- [二维动态规划：](#%E4%BA%8C%E7%BB%B4%E5%8A%A8%E6%80%81%E8%A7%84%E5%88%92%EF%BC%9A)
+		- [二维数组遍历](#%E4%BA%8C%E7%BB%B4%E6%95%B0%E7%BB%84%E9%81%8D%E5%8E%86)
+		- [子串问题：](#%E5%AD%90%E4%B8%B2%E9%97%AE%E9%A2%98%EF%BC%9A)
+		- [序列问题](#%E5%BA%8F%E5%88%97%E9%97%AE%E9%A2%98)
+		- [背包问题：](#%E8%83%8C%E5%8C%85%E9%97%AE%E9%A2%98%EF%BC%9A)
+- [贪心](#%E8%B4%AA%E5%BF%83)
+- [双指针](#%E5%8F%8C%E6%8C%87%E9%92%88)
+- [哈希](#%E5%93%88%E5%B8%8C)
+- [技巧](#%E6%8A%80%E5%B7%A7)
+- [堆栈](#%E5%A0%86%E6%A0%88)
+- [二维矩阵](#%E4%BA%8C%E7%BB%B4%E7%9F%A9%E9%98%B5)
 
 ## 回溯
 Template：
@@ -171,3 +186,94 @@ private void quickSort(int[] nums, int left, int right) {
     quickSort(nums, lo+1, right);
 }
 ```
+
+## 动态规划
+### 一维动态规划：
+通常状态可以用一个变量表示（位置，长度，容量）
+一维数组：
+  1. 一般只会依赖更小的i，dp[i-1] dp[i-2]
+  2. 有时需要依赖更前面的状态，这时需要遍历0～i之间去获得最优值（如最长递增子序列）
+
+* **最长递增子序列** [300. Longest Increasing Subsequence](https://leetcode.com/problems/longest-increasing-subsequence/) 子序列不连续。dp[i]代表着以i结尾的最长子序列长度,初始值dp【i】=1，以每个i为终点，遍历前0～i-1的值，当nums[i]>nums[j]时，dp[i]=Math.max(dp[i],dp[j]+1)，然后再对dp[i]取最大值即可
+* 打家劫舍[198. House Robber](https://leetcode.com/problems/house-robber/)  小偷只能隔着偷，每个家的价值不一样，问最大价值多少。状态转移 ``dp[i]=Math.max(dp[i-2]+nums[i-1],dp[i-1]);`` 要么偷了就是前前个值加当前的价值，要么没偷，就保留i-1的结果
+* **最大乘积子数组**：[152. Maximum Product Subarray](https://leetcode.com/problems/maximum-product-subarray/) 如果是最大和。直接比较Math.max(nums[i],nums[i]+dp[i-1])即可。但是最大乘积会有负数变正数的可能。所以需要维护两个状态转移值，minN和maxN，当nums[i] 是负数时swap这两个值。并不断比较maxN和minN乘以当前num和只保留num的最大最小值，代表要前面的乘积值或者不要。
+* **单词划分** [139. Word Break](https://leetcode.com/problems/word-break/) ，返回一个字符串能否被提供的字典拼凑出来。如果``boolean dp[i]`` 代表以i结尾能否拼凑，状态转移方程就是 需要遍历前面的节点，找到前j是在字典里同时j～i也是的情况， ``dp[j]&&s.substring(j,i)`` .因为依赖前面字符串的状态，所以是两层循环。
+*  最大子数组和[53. Maximum Subarray](https://leetcode.com/problems/maximum-subarray/)： dp【i】表示以i结尾的最大子数组和，``dp[i] = Math.max(dp[i-1]+nums[i],nums[i]);`` 或者用前缀和，然后类似最大股票差值的方式求也可以
+* 杨辉三角：[118. Pascal's Triangle](https://leetcode.com/problems/pascals-triangle/) 按照思路正常做即可，注意先new出来指定长度的list，它的cur.size()还是0，因为即使预先分配了，它的size返回的是当前有多少元素。
+
+### 二维动态规划：
+状态通常需要两个变量才能完全描述问题
+  1. 背包问题：前i个元素和背包容量为j（0/1背包，完全背包）
+  2. 序列问题：A[0...i]和B[0....j]之间某种关系的最优解（最长公共子序列，编辑距离）
+  3. 从（i，j）位置出发或到达（i，j）位置的最优解 （最小路径和，不同路径）
+  4. 字符串本身子串s[i...j]的性质（回文子串，回文子序列）
+     
+二维数组：
+* 通常依赖于相邻行或列：如``dp[i-1][j],dp[i][j-1],dp[i-1][j-1]``
+* 同一行或列中更小的索引 如 ``dp[i][k] (k<j)``
+* 多个状态组合的极值 ``max(dp[i-1][j],dp[i-1][j-weight[i]+value[i]])``
+
+#### 二维数组遍历
+* 最小路径和：[64. Minimum Path Sum](https://leetcode.com/problems/minimum-path-sum/) 从左上角只能向右或向下移动，求最小路径和。状态方程比较好写，只跟两个方向有关。这题不需要建m+1,n+1的dp数组，因为不需要``dp[0][j]和dp[i][0]``的含义
+*  所有路径：[62. Unique Paths](https://leetcode.com/problems/unique-paths/) 和上一题很像，寻找左上到右下的所有可能，状态转移方程改为``dp[i][j]=dp[i-1][j]+dp[i][j-1]``
+* 俄罗斯信封套娃，判断以二维数组表示长宽的信封能嵌套的个数。最长递增序列的变种，先对宽度进行升序排列，由于相同的长度不能嵌套，所以对长度相同的降序排列。然后对长度进行最长递增子序列进行查找。
+#### 子串问题：
+* **最长回文子串** [5. Longest Palindromic Substring](https://leetcode.com/problems/longest-palindromic-substring/) ， 由于需要返回的是String，所以不是记录长度了，而是boolean dp二维数组，只有当 ``i,j位置的值相等且dp[i+1][j-1]是true或者`` j-i<=2 因为没有这个条件无法判断长度为2的字符串。
+*  最长回文子序列[516. Longest Palindromic Subsequence](https://leetcode.com/problems/longest-palindromic-subsequence/)  回文也是用二维dp数组，表示i-j之间最大的子序列长度。所以最后的结果在``dp[0][n-1]``, basecase 是 ``dp[i][i]`` =1, 如果string的i 和 j相等那么长度将增加到``dp[i+1][j-1]+2`` , 否则就保留``dp[i+1][j]或dp[i][j-1]``中最长的一个。由于每次判断需要i+1和j-1的位置已经确认好，所以需要调整循环顺序，主要就是i这倒序查询
+
+#### 序列问题
+* 最长公共子序列：[1143. Longest Common Subsequence](https://leetcode.com/problems/longest-common-subsequence/) 不是公共子串。两个字符串比较所以需要二维dp。当两个字符相等时``dp[i][j]=dp[i-1][j-1]+1`` ，否则就是留``dp[i-1][j]和dp[i][j-1]``二者中最大的。不加1，因为没有匹配上。
+*  编辑距离[72. Edit Distance](https://leetcode.com/problems/edit-distance/)，两个字符串经过最少增删改步骤达到一致。设置dp【i】【j】代表0～i-1和0～j-1 字符串之间一致的最小步骤，base case dp[i][0 和 dp[0][j 】都代表从空字符串到另一个字符串的距离，然后 如果s1[i== s2[j], dp[i] [j] = dp[i-1] [j-1], 不相等就是 dp[i-1][j],dp[i][jj-1],dp[i-1][j-1] 三者之间的最小值+1
+#### 背包问题：
+* **凑零钱**[322. Coin Change](https://leetcode.com/problems/coin-change/) ，完全背包问题，求凑到target的**最小硬币数量**。dp[i]表示amount是i时需要的最小硬币个数，dp【0】【i】是amount+1代表凑不了，状态转移方程就是dp[i]=Math.min(dp[i-coin]+1,dp[i])， 可以用二维做，但是状态转移只跟```
+dp[i-1][j],dp[i][j-coins[i-1]]+1``  有关，比较容易降到1维。
+*  0-1背包 ：经典的01背包问题需要找出这个背包**最多可以装多少价值**的物品。``dp[i][j]``表示前i个物品装到j空间的背包内的最大价值， 那么每次选择时的状态转移方程分两种，一个是装不下，那么只能不装``dp[i][j]=dp[i-1][j]`` ，要么就是 可装可不装，那么就取``dp[i-1][j]和dp[i-1][j-val[i-1]]+val[i-1]``的最大值
+* **完全背包问题**[518. Coin Change II](https://leetcode.com/problems/coin-change-ii/) 硬币可以重复使用，问凑到钱数有几种方式。 ``dp[i][j]``表示 i个物品放入j容量的背包里有几种方式。初始值dp【i】【0】=1表示0不用凑，。那么放得下，``dp[i][j]=dp[i-1][j]+dp[i][j-coins[i-1]]`` 就是不放当前硬币的选项+放之后的选项，由于硬币可以重复，所以不是i-1。放不下那就是``dp[i][j]=dp[i-1][j]`` 
+* **分割等和子集**：[416. Partition Equal Subset Sum](https://leetcode.com/problems/partition-equal-subset-sum/) 0-1背包的变种，要求判断能否将一个子集分成两个，并且元素和相等。可以理解为n个物品能否凑到sum/2的价值，所以用``boolean[][] dp``来维持状态，装不下，那么只能不装``dp[i][j]=dp[i-1][j]``，dp【i】【0】代表能分割所以是true ，要么就是 可装可不装，那么就取``dp[i-1][j]||dp[i-1][j-val[i-1]]`` 的布尔值
+* **完全平方数**[279. Perfect Squares](https://leetcode.com/problems/perfect-squares/) 完全背包。求一个数n最少可以由多少个平方数相加得到。可以转换成完全背包，``t*t`` 小于n的都存到list里，作为硬币，n就是需要凑的钱，硬币可以重复使用。dp[0]应该是0因为0不用凑，其他位置应该初始化为max 因为你要进行最小值的比较。然后当coin比当前容量大的时候``dp[i]=Math.min(dp[i],dp[i-coin]+1);``
+
+## 贪心
+
+* 跳跃游戏[55. Jump Game](https://leetcode.com/problems/jump-game/) 可以沿用动态规划的思想，pre代表可以跳跃的最大距离。base 0位置就是nums【0】，状态转移就是````
+pre=Math.max(pre,i+nums[i]);,前一位可跳位置和当前能跳的最远距离。当然，需要确保前面可以跳到这来，也就是pre >当前位置。
+* **跳跃游戏2**：[45. Jump Game II](https://leetcode.com/problems/jump-game-ii/) 需要从判断能不能走到最后改成返回走到最后的最小步数。所以需要加个变量维护当前步骤内能走到的最远距离cur，和原先的最大距离maxDic，当cur== i 时说明不得不加一步了。加一步后再把maxDic替换给cur。
+* 买股票的最佳时机[121. Best Time to Buy and Sell Stock](https://leetcode.com/problems/best-time-to-buy-and-sell-stock/)  顺序遍历，记录最小值，同时计算当前值和当前记录最小值的差额，最大的即是结果。
+* **划分字符区间**[763. Partition Labels](https://leetcode.com/problems/partition-labels/)： 返回一个长度划分的list，保证每个字母只在一个区间内出现 。先用list统计 每个字符出现的最后位置。然后再二次遍历这个list，用一个变量维护遍历过程中每个字符出现位置的最大值，当val== i的时候，说明有字符已经不得不分割了，就把结果存入，以此类推。
+
+## 双指针
+
+* 3数之和：建立在两数之和之上。首先对数组进行排序，然后对每个nums【i】，找有没有和为-nums【i】的结果。两数之和就是有序数组上的双指针。注意剪枝，如如果数字有正负，那么排序后，数字大于0的就不用找了。 两数之和里，如果相等了，需要把和当前两个相等的都剪枝。 如果不能，在移动左右指针时，也是需要将相等的都剪枝出去。
+* 盛水最多的容器[11. Container With Most Water](https://leetcode.com/problems/container-with-most-water/)：一串数字代表高度。 左右指针，每次算面积，保留最大值，然后移动更短的那一条指针
+* 最长无重复子串[3. Longest Substring Without Repeating Characters](https://leetcode.com/problems/longest-substring-without-repeating-characters/)： 滑动窗口，一个map维护窗口内有没有这个字符，不断移动双指针，找出最长无重复子串
+*  找到字符串中所有字母的异位词[438. Find All Anagrams in a String](https://leetcode.com/problems/find-all-anagrams-in-a-string/)： 一个字符串去另一个字符串中找有没有跟他字母长度都一样，只有顺序不一样的结果。先存储两个字符串前代匹配字符串长度的各个字符出现的次数，也就是26长的int【】，然后每次减小一个位置，增加后一个位置，再依次比较
+* 移动零[283. Move Zeroes](https://leetcode.com/problems/move-zeroes/) 思路就是如果你把所有非0值都移到前面了，那么剩下的自然就是0了。快慢指针，快指针非0，就和慢指针交换值，慢指针++；
+
+## 哈希
+* 单词分组  [49. Group Anagrams](https://leetcode.com/problems/group-anagrams/)，相同字母的字符串放到一个list里。运用hash ``Map<String, List<String>> map`` , 对每个字符串排序后，存入对应的队列，
+* **最长连续序列**： [128. Longest Consecutive Sequence](https://leetcode.com/problems/longest-consecutive-sequence/)  找出一串数字中最长的连续序列。set存储所有数字。然后遍历这个set。而且只从set没有num-1的情况开始计算，因为这样会最长。
+* **%找出所有子数组和为k**[560. Subarray Sum Equals K](https://leetcode.com/problems/subarray-sum-equals-k/) 由于数组里有正有负，所以不能用滑动窗口，所以先求出前缀和，并同时将前缀和存入map中，value是出现的次数,map需要一个默认值（0，1）用来比较最前的prefix，同时判断sum【i】-k的值有几个，就代表能有几个子数组。
+
+## 技巧
+* 合并区间[56. Merge Intervals](https://leetcode.com/problems/merge-intervals/)： 若干个区间块进行合并，重叠的合并在一起。 先对区间块进行正序排列，然后遍历区间块，当前结果集为空或者最后一个结果的末位要大于等于当前区间块的头部，那么就可以合并。否则直接存入结果集
+* **轮转数组**[189. Rotate Array](https://leetcode.com/problems/rotate-array/)：将数组向右轮转k个位置，即[1,2,3,4,5]->[4,5,1,2,3]。 先调转整个数组，[5,4,3,2,1].再调转前k个， 【4，5，3，2，1】。再调转后面的，【4，5，1，2，3】.注意k 可能超过数组长度，所以要预先取模
+* **除自身以外数组的乘积**[238. Product of Array Except Self](https://leetcode.com/problems/product-of-array-except-self/)，维护 两个数组，一个记录从0到i-1的每次的乘积，一个记录i+1到最后的乘积，这样通过这两个数组就可以得出每个位置除自身以外的乘积。
+* **寻找重复数**[287. Find the Duplicate Number](https://leetcode.com/problems/find-the-duplicate-number/)：1～n+1的范围内存在着1～n个数字，那么肯定会有一个重复的。找出重复的数。二分思路，对1，n-1进行二分，也就是n/2向下取整，并统计所有小于等于mid元素。当个数严格大于mid时，说明肯定有重复的，right=mid继续查找。否则肯定不是mid，left=mid+1
+* **下一个排列** [31. Next Permutation](https://leetcode.com/problems/next-permutation/) 返回数字的下一个排列1373842-》1374238。恶心。主要知道规则，首先要倒序找挨着的两个正序的数，如果没有，说明整体是降序的，直接翻转即可。然后倒序找有没有比i大的，如果有，互换，然后再对i+1区域正序排列。
+* **最大子数组和**[53. Maximum Subarray](https://leetcode.com/problems/maximum-subarray/) 求和最大子数组，有正有负，使用前缀和，转换为买股票的最佳时机，记录最小值，同时记录当前前缀和和最小值的差额。注意最小值初始化为0，可以包含第一个前缀和，否则初始化为第一个前缀和然后下标从1开始就会默认不带第一个值。
+* **%颜色排序**[75. Sort Colors](https://leetcode.com/problems/sort-colors/) ：荷兰国旗问题，一组0，1，2按照顺序排列。l指向0的位置，r指向2的位置，idx进行遍历。nums[idx] 是0时与l互换后都++，是2时跟r互换后，只有r--，因为不知道换过来的是什么。是1时直接idx++；
+* 只出现一次的数字 [136. Single Number](https://leetcode.com/problems/single-number/) 一个数组里只有一个数字出现了一次，安位异或（res^=num），剩下的值就是单个的
+## 堆栈
+
+* 有效的括号[20. Valid Parentheses](https://leetcode.com/problems/valid-parentheses/)： 利用一个map维护不同种类括号之间的对应关系，右括号作为key，左括号作为value。然后用栈进行遍历，左括号直接进。否则如果是右括号，栈顶的元素跟当前括号不匹配或者栈为空，即返回false
+* 最小栈[155. Min Stack](https://leetcode.com/problems/min-stack/)：构建一个最小栈的类，除了push/pop/top/以外，还可以返回栈内最小值 getMin（）。维护两个栈，一个用来正常存储，一个只在栈为空或者当前值小于等于栈最小值时才压入。压出时，如果正常栈压出的值等于最小栈的栈顶值，那么也跟着抛出
+* 每日温度[739. Daily Temperatures](https://leetcode.com/problems/daily-temperatures/)：求每个位置对应下一个比他大的温度出现在几天后。用单调栈，只维护比栈顶小的。当当前值小于栈顶时直接入栈。大于时while循环弹出所有比当前值小的，存储的是下标所以直接相减就行了
+* 数组中第k个最大元素[215. Kth Largest Element in an Array](https://leetcode.com/problems/kth-largest-element-in-an-array/)：维护一个k大小的最小堆，因为堆顶是最小的，然后放入前k个元素，当后续的元素比当前堆内大的时候，就弹出堆顶的元素，插入新值，这样最后堆顶最小的就是第k大的。
+* **数组中前k个高频元素**[347. Top K Frequent Elements](https://leetcode.com/problems/top-k-frequent-elements/) 返回前k高频的元素本身。一个map统计每个数字出现的次数，然后维护一个小根堆，注意比较方式应该是比较map.get(key)。大于堆顶元素的频次就替换，剩下的就是前k高频的``PriorityQueue<Integer> heap=new PriorityQueue<>(k,(a,b)->map.get(a)-map.get(b));``
+* **字符串解码**[394. Decode String](https://leetcode.com/problems/decode-string/) ：细节，``3[a2[c]]``解码成accaccacc。两个栈，一个存数字，一个存字符串。如果是数字则num=num* 10+(c-'0'); 如果是字母则 cur.append(c); 如果是左括号，则将两个参数分别压入各自的栈，并置0置空。如果是右括号，则弹出两个栈顶的值s_num,s_str, 手里的cur执行s_num遍，并和s_str进行拼接。 
+
+## 二维矩阵
+* 旋转输出矩阵[54. Spiral Matrix](https://leetcode.com/problems/spiral-matrix/) l,r,u,d分别定义四个边界，旋转打印矩阵。然后每次打完一行或一列后，判断是否已经到边界值，终止循环。
+* 二维数组置零 [73. Set Matrix Zeroes](https://leetcode.com/problems/set-matrix-zeroes/) 如果不强调O（1），可以两遍循环，第一遍用set 记录下那行那列有0，第二遍遍历的时候置零。如果强调O（1），可以用第一行第一列做一个标志列，首先遍历下第一行第一列，用两个flag去存第一行第一列本身有没有0.然后遍历的时候将有0的位置投影到第一行第一列。第二次循环时置零。
+* 搜索二维矩阵2 [240. Search a 2D Matrix II](https://leetcode.com/problems/search-a-2d-matrix-ii/) 跟1相比 不保证前一行的数比下一行都小。只保证行内增序，列向增序。暴力法就是每行二分。或者模拟成二叉树，在右上角的位置，左边的数都比自己小，下边的数都比自己大。从右上角的值和target进行比较小的话就减列，大的话就增行。
+* 岛屿数量[200. Number of Islands](https://leetcode.com/problems/number-of-islands/) 1代表岛屿，0代表海洋。双层循环找是1的位置开始dfs遍历，然后有一个isArea函数判断是否超出边界，当该位置是1是，四个方向dfs。每遍历到一个位置就把该位置改成2，表示已经遍历过了。岛屿数量就是每一个递归函数调用了就加1. 岛屿最大面积就是改成1+dfs（）四个方向。
+* **腐烂的橘子**[994. Rotting Oranges](https://leetcode.com/problems/rotting-oranges/) 0 代表空，1代表新鲜的橘子，2代表腐烂的橘子。问橘子全部腐烂需要几分钟。每分钟腐烂的橘子会向四周扩散。如果有腐烂不到的，返回-1. 沿用岛屿数量的思路，从2位置开始，多传一个time的参数，从2开始，每次dfs的时候就加1。dfs如果超出边界，或者不是新鲜的橘子且覆盖的腐烂时间小于当前时间的，直接返回。最后再双循环统计一遍，如果有还是1的，直接-1，要不遍历完，如果res还是初始值0，说明没有腐烂的路径，结果还是0，要不就是最大时间-2
